@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Comfy::Admin::Cms::FilesController < Comfy::Admin::Cms::BaseController
-
+  skip_before_action :verify_authenticity_token
   include ::Comfy::ReorderAction
   self.reorder_action_resource = ::Comfy::Cms::File
 
@@ -72,8 +72,9 @@ class Comfy::Admin::Cms::FilesController < Comfy::Admin::Cms::BaseController
       render partial: "file", object: @file
     when "redactor"
       render json: {
-        filelink: url_for(@file.attachment),
-        filename: @file.attachment.filename
+        "uploaded": 1,
+        "fileName": @file.attachment.filename,
+        "url": url_for(@file.attachment)
       }
     else
       flash[:success] = I18n.t("comfy.admin.cms.files.created")
@@ -131,12 +132,12 @@ protected
   end
 
   def file_params
-    file = params[:file]
+    file = params[:upload]
     unless file.is_a?(Hash) || file.respond_to?(:to_unsafe_hash)
-      params[:file] = {}
-      params[:file][:file] = file
+      params[:upload] = {}
+      params[:upload][:file] = file
     end
-    params.fetch(:file, {}).permit!
+    params.fetch(:upload, {}).permit!
   end
 
 end
